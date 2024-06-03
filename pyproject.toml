@@ -1,0 +1,33 @@
+[build-system]
+requires = ["flit_core >=3.2"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "ase_quantumespresso"
+version = "0.0.2"
+description = "ASE Calculators for Quantum ESPRESSO"
+authors = [{ name = "Xing Wang", email = "xingwang1991@gmail.com" }]
+readme = "README.md"
+license = { text = "MIT License" }
+requires-python = ">=3.9"
+dependencies = [
+    "ase>=3.23.0",
+]
+keywords = ["graph", "workflows"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering"
+]
+
+[project.urls]
+Documentation = "https://ase-quantumespresso.readthedocs.io"
+Source = "https://github.com/superstar54/ase-quantumespresso"
+
