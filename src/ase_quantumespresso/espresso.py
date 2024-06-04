@@ -1,7 +1,9 @@
 import os
 import warnings
 from ase.calculators.genericfileio import GenericFileIOCalculator
-from ase.calculators.espresso import EspressoTemplate as AseEspressoTemplate
+from ase.calculators.espresso import EspressoTemplate, EspressoProfile
+from ase.io import read, write
+from ase.io.espresso import Namelist
 
 compatibility_msg = (
     "Espresso calculator is being restructured.  Please use e.g. "
@@ -9,15 +11,44 @@ compatibility_msg = (
     "to customize command-line arguments."
 )
 
+__all__ = ['Espresso', 'PwTemplate', 'EspressoProfile']
 
-class PwTemplate(AseEspressoTemplate):
-    def read_results(self, label):
+class PwTemplate(EspressoTemplate):
+
+    def write_input(self, profile, directory, atoms, parameters, properties):
+        """Override the write_input method to support: 
+        - DFT+U
+        """
+        dst = directory / self.inputname
+
+        input_data = Namelist(parameters.pop("input_data", None))
+        input_data.to_nested("pw")
+        input_data["control"].setdefault("pseudo_dir", str(profile.pseudo_dir))
+        parameters["input_data"] = input_data
+        # handle DFT+U
+        additional_cards = parameters.pop("additional_cards", [])
+        if "hubbard_u" in atoms.info:
+            additional_cards.append(atoms.info["hubbard_u"])
+
+        write(
+            dst,
+            atoms,
+            format='espresso-in',
+            properties=properties,
+            additional_cards=additional_cards,
+            **parameters,
+        )
+
+    def read_results(self, directory):
         """Override to set energy to None if not present."""
-        results = super().read_results(label)
-        if "energy" not in results:
-            results["energy"] = None
+        path = directory / self.outputname
+        atoms = read(path, format='espresso-out')
+        results = dict(atoms.calc.properties())
+        # Set energy to None if not present in case of `bands` calculation etc.
+        results.setdefault('energy', None)
+        # save the updated atoms object
+        results['atoms'] = atoms
         return results
-
 
 class Espresso(GenericFileIOCalculator):
     def __init__(
