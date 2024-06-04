@@ -11,12 +11,12 @@ compatibility_msg = (
     "to customize command-line arguments."
 )
 
-__all__ = ['Espresso', 'PwTemplate', 'EspressoProfile']
+__all__ = ["Espresso", "PwTemplate", "EspressoProfile"]
+
 
 class PwTemplate(EspressoTemplate):
-
     def write_input(self, profile, directory, atoms, parameters, properties):
-        """Override the write_input method to support: 
+        """Override the write_input method to support:
         - DFT+U
         """
         dst = directory / self.inputname
@@ -33,7 +33,7 @@ class PwTemplate(EspressoTemplate):
         write(
             dst,
             atoms,
-            format='espresso-in',
+            format="espresso-in",
             properties=properties,
             additional_cards=additional_cards,
             **parameters,
@@ -42,13 +42,14 @@ class PwTemplate(EspressoTemplate):
     def read_results(self, directory):
         """Override to set energy to None if not present."""
         path = directory / self.outputname
-        atoms = read(path, format='espresso-out')
+        atoms = read(path, format="espresso-out")
         results = dict(atoms.calc.properties())
         # Set energy to None if not present in case of `bands` calculation etc.
-        results.setdefault('energy', None)
+        results.setdefault("energy", None)
         # save the updated atoms object
-        results['atoms'] = atoms
+        results["atoms"] = atoms
         return results
+
 
 class Espresso(GenericFileIOCalculator):
     def __init__(

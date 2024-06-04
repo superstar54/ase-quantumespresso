@@ -30,4 +30,3 @@ classifiers = [
 [project.urls]
 Documentation = "https://ase-quantumespresso.readthedocs.io"
 Source = "https://github.com/superstar54/ase-quantumespresso"
-
