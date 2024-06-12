@@ -12,3 +12,12 @@ pip install ase-quantumespresso
 ## Workflows using `ase-quantumespresso`
 
 Please see the [aiida-workgraph](https://workgraph-collections.readthedocs.io/en/latest/ase/espresso/index.html)
+
+
+## Usage
+
+### DFT+U
+
+```python
+atoms.info['hubbard_u'] = 'HUBBARD (ortho-atomic)', 'U Mn-3d 5.0', 'U Ni-3d 6.0'
+```
