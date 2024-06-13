@@ -39,4 +39,4 @@ def read_pdos_out(directory):
         with open(file, "r") as pdosatm_file:
             pdos_atm_array_dict[name] = np.atleast_2d(np.genfromtxt(pdosatm_file))
 
-    return {"pdos": {"atom": pdos_atm_array_dict, "totol": pdos_tot}}
+    return {"pdos": {"atom": pdos_atm_array_dict, "total": pdos_tot}}

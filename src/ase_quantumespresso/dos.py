@@ -26,12 +26,12 @@ def read_dos_out(filepath):
     array_names = [[], []]
     array_units = [[], []]
     array_names[0] = [
-        "dos_energy",
+        "energy",
         "dos",
         "integrated_dos",
     ]  # When spin is not displayed
     array_names[1] = [
-        "dos_energy",
+        "energy",
         "dos_spin_up",
         "dos_spin_down",
         "integrated_dos",
