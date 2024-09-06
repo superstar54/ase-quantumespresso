@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "ase_quantumespresso"
-version = "0.0.3"
+version = "0.0.4"
 description = "ASE Calculators for Quantum ESPRESSO"
 authors = [{ name = "Xing Wang", email = "xingwang1991@gmail.com" }]
 readme = "README.md"
