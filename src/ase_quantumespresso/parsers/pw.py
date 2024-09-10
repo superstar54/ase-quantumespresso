@@ -193,6 +193,7 @@ class PwParser(BaseParser):
             exit_code = validator(trajectory, parsed_parameters, logs_stdout)
             if exit_code:
                 return self.exit(exit_code)
+        return self.exit()
 
     def get_calculation_type(self):
         """Return the type of the calculation."""
