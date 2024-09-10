@@ -1,55 +1,52 @@
 # -*- coding: utf-8 -*-
-"""`Parser` implementation for the `PwCalculation` calculation job class.
+"""`Parser` implementation for the `PW` calculatioin.
 
 Modified from aiida-quantumespresso.parsers.pw.PwParser.
 """
 import traceback
 
-from aiida.engine import ExitCode
 import numpy
 
-from aiida_quantumespresso.calculations.pw import PwCalculation
+# from aiida_quantumespresso.calculations.pw import PwCalculation
 from aiida_quantumespresso.utils.mapping import get_logging_container
-from dataclasses import dataclass
-from .exit_code import PWExitCodes
+from .exit_code import PwExitCodes
 from ase.dft.kpoints import BandPath
+import dataclasses
 import os
+from .base import BaseParser
 
 
-@dataclass
-class Node:
-    exit_status: str = None
-    exit_message: str = None
+@dataclasses.dataclass
+class TrajectoryData:
+    """Mimic the AiiDA `TrajectoryData` class.
+    This is only used to store the parsed trajectory temporarily."""
+
+    steps: numpy.ndarray
+    cells: numpy.ndarray
+    symbols: numpy.ndarray
+    positions: numpy.ndarray
+    arrays: dict
+
+    def get_array(self, key):
+        return self.arrays[key]
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
-class PwParser:
+class PwParser(BaseParser):
     """`Parser` implementation for the `PW` calculation, modified from aiida-quantumespresso."""
 
     def __init__(self, directory, outputname, atoms, parameters):
         """Initialize the instance of `PwParser`."""
-        self.directory = directory
+        super().__init__(directory, output_filename=outputname)
         self.outputname = outputname
         self.atoms = atoms
         self.parameters = parameters
-        self.node = Node()
-        self.exit_codes = PWExitCodes()
-        self.results = {}
+        self.exit_codes = PwExitCodes()
         self.exit_code_xml = None
         self.exit_code_stdout = None
         self.exit_code_parser = None
-
-    def out(self, key, value):
-        self.results[key] = value
-
-    def exit(self, exit_code):
-        if exit_code is not None:
-            pass
-        elif self.node.exit_status is not None:
-            exit_code = ExitCode(self.node.exit_status, self.node.exit_message)
-        else:
-            exit_code = ExitCode(0)
-
-        return exit_code
 
     def parse(self, **kwargs):
         """Parse the retrieved files of a completed `PwCalculation` into output nodes.
@@ -58,6 +55,8 @@ class PwParser:
         permanently in the repository. The second required node is a filepath under the key `retrieved_temporary_files`
         which should contain the temporary retrieved files.
         """
+        from aiida_quantumespresso.parsers.parse_raw.pw import reduce_symmetries
+
         # pylint: disable=too-many-statements
         dir_with_bands = None
         crash_file = None
@@ -65,23 +64,11 @@ class PwParser:
         self.exit_code_stdout = None
         self.exit_code_parser = None
 
-        # XW settings is used to store fixed coordinates
-        # try:
-        #     settings = self.node.inputs.settings.get_dict()
-        # except exceptions.NotExistent:
-        #     settings = {}
+        # For the moment, we do not have this setting input.
+        settings = {}
 
         # Look for optional settings input node and potential 'parser_options' dictionary within it
-        # parser_options = settings.get(self.get_parser_settings_key(), None)
-        parser_options = {}
-
-        # XW dir_with_bands is the old XML format, we don't need it anymore
-        # Verify that the retrieved_temporary_folder is within the arguments if temporary files were specified
-        # if self.node.base.attributes.get('retrieve_temporary_list', None):
-        #     try:
-        #         dir_with_bands = kwargs['retrieved_temporary_folder']
-        #     except KeyError:
-        #         return self.exit(self.exit_codes.ERROR_NO_RETRIEVED_TEMPORARY_FOLDER)
+        parser_options = settings.get(self.get_parser_settings_key(), None)
 
         # We check if the `CRASH` file was retrieved. If so, we parse its output
         crash_file_filename = "CRASH"
@@ -105,14 +92,14 @@ class PwParser:
 
         # XW check later
         # If the parser option 'all_symmetries' is False, we reduce the raw parsed symmetries to save space
-        # all_symmetries = (
-        #     False
-        #     if parser_options is None
-        #     else parser_options.get("all_symmetries", False)
-        # )
+        all_symmetries = (
+            False
+            if parser_options is None
+            else parser_options.get("all_symmetries", False)
+        )
         # XW check later
-        # if not all_symmetries and 'cell' in parsed_structure:
-        # reduce_symmetries(parsed_parameters, parsed_structure, self.logger)
+        if not all_symmetries and "cell" in parsed_structure:
+            reduce_symmetries(parsed_parameters, parsed_structure, self.logger)
 
         structure = self.build_output_structure(parsed_structure)
         kpoints = self.build_output_kpoints(parsed_parameters, structure)
@@ -156,29 +143,29 @@ class PwParser:
         # ignore = ['Error while parsing ethr.', 'DEPRECATED: symmetry with ibrav=0, use correct ibrav instead']
         # self.emit_logs([logs_stdout, logs_xml], ignore=ignore)
 
-        # If either the stdout or XML were incomplete or corrupt investigate the potential cause
-        if self.exit_code_stdout or self.exit_code_xml:
+        # # If either the stdout or XML were incomplete or corrupt investigate the potential cause
+        # if self.exit_code_stdout or self.exit_code_xml:
 
-            # First check whether the scheduler already reported an exit code.
-            if self.node.exit_status is not None:
+        #     # First check whether the scheduler already reported an exit code.
+        #     if self.node.exit_status is not None:
 
-                # The following scheduler errors should correspond to cases where we can simply restart the calculation
-                # and have a chance that the calculation will succeed as the error can be transient.
-                recoverable_scheduler_error = self.node.exit_status in [
-                    PwCalculation.exit_codes.ERROR_SCHEDULER_OUT_OF_WALLTIME.status,
-                    PwCalculation.exit_codes.ERROR_SCHEDULER_NODE_FAILURE.status,
-                ]
+        #         # The following scheduler errors should correspond to cases where we can simply restart the calculation
+        #         # and have a chance that the calculation will succeed as the error can be transient.
+        #         recoverable_scheduler_error = self.node.exit_status in [
+        #             PwCalculation.exit_codes.ERROR_SCHEDULER_OUT_OF_WALLTIME.status,
+        #             PwCalculation.exit_codes.ERROR_SCHEDULER_NODE_FAILURE.status,
+        #         ]
 
-                if (
-                    self.get_calculation_type() in ["relax", "vc-relax"]
-                    and recoverable_scheduler_error
-                ):
-                    return (
-                        PwCalculation.exit_codes.ERROR_IONIC_INTERRUPTED_PARTIAL_TRAJECTORY
-                    )
+        #         if (
+        #             self.get_calculation_type() in ["relax", "vc-relax"]
+        #             and recoverable_scheduler_error
+        #         ):
+        #             return (
+        #                 PwCalculation.exit_codes.ERROR_IONIC_INTERRUPTED_PARTIAL_TRAJECTORY
+        #             )
 
-                # Now it is unlikely we can provide a more specific exit code so we keep the scheduler one.
-                return ExitCode(self.node.exit_status, self.node.exit_message)
+        #         # Now it is unlikely we can provide a more specific exit code so we keep the scheduler one.
+        #         return ExitCode(self.node.exit_status, self.node.exit_message)
 
         # Check for specific known problems that can cause a pre-mature termination of the calculation
         exit_code = self.validate_premature_exit(logs_stdout)
@@ -417,7 +404,7 @@ class PwParser:
             return parsed_data, logs
 
         try:
-            with open(self.directory / "out" / "pwscf.save" / xml_files[0]) as xml_file:
+            with open(self.directory / "pwscf.save" / xml_files[0]) as xml_file:
                 parsed_data, logs = parse_xml(xml_file, dir_with_bands)
         except IOError:
             self.exit_code_xml = self.exit_codes.ERROR_OUTPUT_XML_READ
@@ -523,9 +510,8 @@ class PwParser:
         :return: a new `StructureData` created from the parsed data iff the calculation type produces a new structure
             and the parsed data contained a cell definition. In all other cases, the input structure will be returned.
         """
-        from aiida_quantumespresso.parsers.parse_raw import (
-            convert_qe_to_aiida_structure,
-        )
+
+        from .utils import convert_qe_to_atoms
 
         type_calc = self.parameters["input_data"]["CONTROL"]["calculation"]
 
@@ -534,7 +520,9 @@ class PwParser:
         ):
             return self.atoms
 
-        return convert_qe_to_aiida_structure(parsed_structure, self.atoms)
+        atoms = convert_qe_to_atoms(parsed_structure, self.atoms)
+
+        return atoms
 
     @staticmethod
     def build_output_trajectory(parsed_trajectory, structure):
@@ -543,6 +531,7 @@ class PwParser:
         :param parsed_trajectory: the raw parsed trajectory data
         :return: a `TrajectoryData` or None
         """
+
         fractional = False
 
         if "atomic_positions_relax" in parsed_trajectory:
@@ -572,13 +561,13 @@ class PwParser:
         stepids = numpy.arange(len(positions))
 
         trajectory = {}
-        trajectory = {
-            "steps": stepids,
-            "cells": cells,
-            "symbols": symbols,
-            "positions": positions,
-            "arrays": {},
-        }
+        trajectory = TrajectoryData(
+            steps=stepids,
+            cells=cells,
+            symbols=symbols,
+            positions=positions,
+            arrays={},
+        )
 
         for key, value in parsed_trajectory.items():
             trajectory["arrays"][key] = numpy.array(value)

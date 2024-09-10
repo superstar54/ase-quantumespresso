@@ -17,9 +17,15 @@ class NamelistTemplate(CalculatorTemplate):
         self.errorname = f"{self._label}.err"
 
     def execute(self, directory, profile):
-        profile.run(
-            directory, self.inputname, self.outputname, errorfile=self.errorname
-        )
+        """Do not raise an exception if the calculation fails."""
+        try:
+            profile.run(
+                directory, self.inputname, self.outputname, errorfile=self.errorname
+            )
+        except Exception as e:
+            print(
+                f"The calculation failed with the following error: {e}. The results can not be trusted."
+            )
 
     def load_profile(self, cfg, **kwargs):
         return EspressoProfile.from_config(cfg, self.name, **kwargs)

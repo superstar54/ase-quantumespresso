@@ -22,7 +22,9 @@ class PwTemplate(EspressoTemplate):
                 directory, self.inputname, self.outputname, errorfile=self.errorname
             )
         except Exception as e:
-            print(f"Error: {e}")
+            print(
+                f"The calculation failed with the following error: {e}. The results can not be trusted."
+            )
 
     def write_input(self, profile, directory, atoms, parameters, properties):
         """Override the write_input method to support:
@@ -55,7 +57,7 @@ class PwTemplate(EspressoTemplate):
 
     def read_results(self, directory):
         """Override to set energy to None if not present."""
-        from .parsers.pw import PwParser
+        from .parsers import PwParser
 
         parser = PwParser(self.directory, self.outputname, self.atoms, self.parameters)
         exit_code = parser.parse()
@@ -127,3 +129,10 @@ class Espresso(GenericFileIOCalculator):
             directory=directory,
             parameters=kwargs,
         )
+
+    def get_property(self, name, atoms=None, **kwargs):
+        from ase import Atoms
+
+        if atoms is None:
+            atoms = Atoms()
+        return super().get_property(name, atoms=atoms, **kwargs)
