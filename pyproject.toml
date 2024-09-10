@@ -12,6 +12,7 @@ license = { text = "MIT License" }
 requires-python = ">=3.9"
 dependencies = [
     "ase>=3.23.0",
+    "aiida-quantumespresso",
 ]
 keywords = ["graph", "workflows"]
 classifiers = [
@@ -30,3 +31,19 @@ classifiers = [
 [project.urls]
 Documentation = "https://ase-quantumespresso.readthedocs.io"
 Source = "https://github.com/superstar54/ase-quantumespresso"
+
+
+[project.optional-dependencies]
+docs = [
+    "sphinx_rtd_theme",
+    "sphinx~=7.2",
+    "nbsphinx",
+]
+pre-commit = [
+    "pre-commit~=2.2",
+    "pylint~=2.17.4",
+]
+tests = [
+    "pytest~=7.0",
+    "pytest-cov~=2.7,<2.11",
+]

@@ -2,7 +2,7 @@ import os
 import warnings
 from ase.calculators.genericfileio import GenericFileIOCalculator
 from ase.calculators.espresso import EspressoTemplate, EspressoProfile
-from ase.io import read, write
+from ase.io import write
 from ase.io.espresso import Namelist
 
 compatibility_msg = (
@@ -15,10 +15,26 @@ __all__ = ["Espresso", "PwTemplate", "EspressoProfile"]
 
 
 class PwTemplate(EspressoTemplate):
+    def execute(self, directory, profile):
+        """Do not raise an exception if the calculation fails."""
+        try:
+            profile.run(
+                directory, self.inputname, self.outputname, errorfile=self.errorname
+            )
+        except Exception as e:
+            print(
+                f"The calculation failed with the following error: {e}. The results can not be trusted."
+            )
+
     def write_input(self, profile, directory, atoms, parameters, properties):
         """Override the write_input method to support:
         - DFT+U
         """
+        self.directory = directory
+        self.atoms = atoms
+        self.parameters = parameters
+        self.properties = properties
+
         dst = directory / self.inputname
 
         input_data = Namelist(parameters.pop("input_data", None))
@@ -41,13 +57,15 @@ class PwTemplate(EspressoTemplate):
 
     def read_results(self, directory):
         """Override to set energy to None if not present."""
-        path = directory / self.outputname
-        atoms = read(path, format="espresso-out")
-        results = dict(atoms.calc.properties())
-        # Set energy to None if not present in case of `bands` calculation etc.
-        results.setdefault("energy", None)
-        # save the updated atoms object
-        results["atoms"] = atoms
+        from .parsers import PwParser
+
+        parser = PwParser(self.directory, self.outputname, self.atoms, self.parameters)
+        exit_code = parser.parse()
+
+        results = parser.results
+        results["exit_code"] = exit_code
+        results.setdefault("energy", results["output_parameters"].get("energy", None))
+        results["atoms"] = results.get("output_structure", None)
         return results
 
 
@@ -111,3 +129,10 @@ class Espresso(GenericFileIOCalculator):
             directory=directory,
             parameters=kwargs,
         )
+
+    def get_property(self, name, atoms=None, **kwargs):
+        from ase import Atoms
+
+        if atoms is None:
+            atoms = Atoms()
+        return super().get_property(name, atoms=atoms, **kwargs)
