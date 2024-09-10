@@ -20,5 +20,4 @@ class ProjwfcTemplate(NamelistTemplate):
         exit_code = parser.parse()
         results = parser.results
         results["exit_code"] = exit_code
-        print("results: ", results.keys())
         return results

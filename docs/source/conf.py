@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 
-project = "WorkGraph Collections"
-copyright = "2023, Xing Wang"
+project = "ASE QuantumESPRESSO"
+copyright = "2024, Xing Wang"
 author = "Xing Wang"
 
 # The full version, including alpha/beta/rc tags

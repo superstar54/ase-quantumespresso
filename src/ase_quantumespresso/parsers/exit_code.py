@@ -120,7 +120,7 @@ is `False` and/or `electron_maxstep` is 0.",
 
 
 @dataclass(frozen=True)
-class NamelistsCalculation:
+class NamelistsExitCodes:
     ERROR_OUTPUT_STDOUT_MISSING: ExitCode = ExitCode(
         302, "The folder did not contain the required stdout output file."
     )
@@ -139,14 +139,14 @@ class NamelistsCalculation:
 
 
 @dataclass(frozen=True)
-class DosExitCodes(NamelistsCalculation):
+class DosExitCodes(NamelistsExitCodes):
     ERROR_OUTPUT_STDOUT_MISSING: ExitCode = ExitCode(
         302, "The folder did not contain the required stdout output file."
     )
 
 
 @dataclass(frozen=True)
-class ProjwfcExitCodes(NamelistsCalculation):
+class ProjwfcExitCodes(NamelistsExitCodes):
     ERROR_NO_RETRIEVED_TEMPORARY_FOLDER: ExitCode = ExitCode(
         301, "The retrieved temporary folder could not be accessed."
     )

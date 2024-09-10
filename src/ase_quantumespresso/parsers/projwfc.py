@@ -122,7 +122,6 @@ class ProjwfcParser(BaseParser):
         Dos_out["y"] = {"arrays": dos, "labels": "Dos", "units": "states/eV"}
         self.out("dos", Dos_out)
 
-        print("results: ", self.results.keys())
         return self.exit(logs=logs)
 
     def _parse_xml(self, retrieved_temporary_folder):

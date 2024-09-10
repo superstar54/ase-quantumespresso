@@ -4,7 +4,6 @@
 Modified from aiida-quantumespresso.parsers.dos.DosParser.
 """
 
-# from aiida_quantumespresso.calculations.pw import PwCalculation
 from aiida_quantumespresso.utils.mapping import get_logging_container
 from .exit_code import DosExitCodes
 from .base import BaseParser
