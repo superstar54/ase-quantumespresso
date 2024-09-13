@@ -31,7 +31,7 @@ class Ld1Parser(BaseParser):
         if base_exit_code:
             return self.exit(base_exit_code, logs)
 
-        self.out("output_parameters", parsed_stdout)
+        self.out("parameters", parsed_stdout)
 
         if "ERROR_OUTPUT_STDOUT_INCOMPLETE" in logs.error:
             return self.exit(self.exit_codes.ERROR_OUTPUT_STDOUT_INCOMPLETE, logs)

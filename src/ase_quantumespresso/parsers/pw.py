@@ -116,30 +116,22 @@ class PwParser(BaseParser):
 
         # Only attach the `KpointsData` as output if there will be no `BandsData` output and inputs were defined as mesh
         if kpoints and not bands and not input_kpoints_explicit:
-            self.out("output_kpoints", kpoints)
-        else:
-            self.out("output_kpoints", None)
+            self.out("kpoints", kpoints)
 
         if bands:
-            self.out("output_band", bands)
-        else:
-            self.out("output_band", None)
+            self.out("band", bands)
 
         if trajectory:
-            self.out("output_trajectory", trajectory)
-        else:
-            self.out("output_trajectory", None)
+            self.out("trajectory", trajectory)
 
-        self.out("output_structure", structure)
+        self.out("structure", structure)
 
         # Separate the atomic_occupations dictionary in its own node if it is present
         atomic_occupations = parsed_parameters.pop("atomic_occupations", None)
         if atomic_occupations:
-            self.out("output_atomic_occupations", atomic_occupations)
-        else:
-            self.out("output_atomic_occupations", None)
+            self.out("atomic_occupations", atomic_occupations)
 
-        self.out("output_parameters", parsed_parameters)
+        self.out("parameters", parsed_parameters)
 
         # Emit the logs returned by the XML and stdout parsing through the logger
         # If the calculation was an initialization run, reset the XML logs because they will contain a lot of verbose
@@ -413,7 +405,12 @@ class PwParser(BaseParser):
             return parsed_data, logs
 
         try:
-            with open(self.directory / "pwscf.save" / xml_files[0]) as xml_file:
+            ourdir = (
+                self.parameters["input_data"].get("CONTROL", {}).get("outdir", "./")
+            )
+            with open(
+                self.directory / ourdir / "pwscf.save" / xml_files[0]
+            ) as xml_file:
                 parsed_data, logs = parse_xml(xml_file, dir_with_bands)
         except IOError:
             self.exit_code_xml = self.exit_codes.ERROR_OUTPUT_XML_READ

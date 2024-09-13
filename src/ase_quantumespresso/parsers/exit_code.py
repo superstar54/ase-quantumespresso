@@ -7,6 +7,22 @@ class PwExitCodes:
     ERROR_NO_RETRIEVED_TEMPORARY_FOLDER: ExitCode = ExitCode(
         301, "The retrieved temporary folder could not be accessed."
     )
+    ERROR_OUTPUT_STDOUT_MISSING: ExitCode = ExitCode(
+        302, "The retrieved folder did not contain the required stdout output file."
+    )
+    ERROR_OUTPUT_STDOUT_READ: ExitCode = ExitCode(
+        310, "The stdout output file could not be read."
+    )
+    ERROR_OUTPUT_STDOUT_PARSE: ExitCode = ExitCode(
+        311, "The stdout output file could not be parsed."
+    )
+    ERROR_OUTPUT_STDOUT_INCOMPLETE: ExitCode = ExitCode(
+        312,
+        "The stdout output file was incomplete probably because the calculation got interrupted.",
+    )
+    ERROR_OUT_OF_WALLTIME: ExitCode = ExitCode(
+        400, "The calculation stopped prematurely because it ran out of walltime."
+    )
     ERROR_OUTPUT_XML_MISSING: ExitCode = ExitCode(
         303, "The folder did not contain the required XML file."
     )
