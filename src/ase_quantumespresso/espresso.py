@@ -64,8 +64,11 @@ class PwTemplate(EspressoTemplate):
 
         results = parser.results
         results["exit_code"] = exit_code
-        results.setdefault("energy", results["output_parameters"].get("energy", None))
-        results["atoms"] = results.get("output_structure", None)
+        for key in ["kpoints", "band", "trajectory", "structure", "atomic_occupations"]:
+            results.setdefault(key, None)
+        results["atoms"] = results.pop("structure", None)
+        results.setdefault("parameters", {})
+        results.setdefault("energy", results["parameters"].get("energy", None))
         return results
 
 
